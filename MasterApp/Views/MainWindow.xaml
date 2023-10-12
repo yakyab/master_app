@@ -38,6 +38,7 @@
             <RowDefinition Height="2*"/>
             <RowDefinition Height="2*"/>
             <RowDefinition Height="2*"/>
+            <RowDefinition Height="1.5*"/>
         </Grid.RowDefinitions>
         <!-- Przycisk do wyboru folderu -->
         <Button Content="Choose Folder" Command="{Binding ChooseFolderCommand}" Grid.Row="0" Style="{StaticResource ButtonStyle}"/>
@@ -52,6 +53,8 @@
         <Button Content="Start" Command="{Binding StartCommand}" Grid.Row="3" Style="{StaticResource ButtonStyle}"/>
         <Button Content="Stop" Command="{Binding StopCommand}" Grid.Row="4" Style="{StaticResource ButtonStyle}"/>
         <Button Content="Show Statistics" Command="{Binding ShowStatisticsCommand}" Grid.Row="5" Style="{StaticResource ButtonStyle}"/>
+        <!-- Status połączenia -->
+        <TextBlock Text="{Binding ConnectionStatus}" Grid.Row="6" FontSize="14" FontWeight="Bold" Foreground="DarkSlateBlue" HorizontalAlignment="Left" Margin="5"/>
     </Grid>
 </Window>
 

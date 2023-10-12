@@ -25,33 +25,69 @@ namespace MasterApp.ViewModels
         // Właściwości bindowane do interfejsu użytkownika.
         public string CurrentTrackingPath => $"Tracking Path: {_trackingFolderPath}";
         public string CurrentUdpPort => $"UDP Listen Port: {_udpListenPort}";
+
+        private bool _isSlaveActive;
+        // Właściwość IsSlaveActive reprezentuje status połączenia z Slave.
+        // Jeśli wartość tej właściwości zostanie zmieniona, automatycznie zostanie wywołane zdarzenie OnPropertyChanged,
+        // aby zaktualizować powiązane z nią elementy interfejsu użytkownika.
+        public bool IsSlaveActive
+        {
+            get => _isSlaveActive;
+            set
+            {
+                // Sprawdzenie, czy nowa wartość różni się od obecnej.
+                if (_isSlaveActive != value)
+                {
+                    // Aktualizacja wartości właściwości.
+                    _isSlaveActive = value;
+                    // Informowanie o zmianie wartości właściwości, aby powiązane z nią elementy UI mogły zostać zaktualizowane.
+                    OnPropertyChanged(nameof(IsSlaveActive));
+                    // Aktualizacja statusu połączenia, aby odzwierciedlić zmianę w IsSlaveActive.
+                    OnPropertyChanged(nameof(ConnectionStatus));
+                }
+            }
+        }
+        // Właściwość ConnectionStatus zwraca czytelny dla użytkownika komunikat na temat statusu połączenia.
+        // Jeśli IsSlaveActive jest true, zwraca "Status połączenia: aktywne", w przeciwnym razie "Status połączenia: nieaktywne".
+        public string ConnectionStatus => IsSlaveActive ? "Status połączenia: aktywne" : "Status połączenia: nieaktywne";
         public string UdpListenPort
         {
             get => _udpListenPort.ToString();
             set
             {
+                // Próba konwersji wprowadzonej wartości na liczbę całkowitą (numer portu) i sprawdzenie, czy różni się od obecnej wartości.
                 if (int.TryParse(value, out int parsedValue) && _udpListenPort != parsedValue)
                 {
+                    // Aktualizacja wartości właściwości.
                     _udpListenPort = parsedValue;
+                    // Informowanie o zmianie wartości właściwości, aby powiązane z nią elementy UI mogły zostać zaktualizowane.
                     OnPropertyChanged(nameof(UdpListenPort));
+                    // Aktualizacja możliwości wykonania komendy StartCommand, aby odzwierciedlić zmianę w UdpListenPort.
                     (StartCommand as RelayCommand)?.RaiseCanExecuteChanged();
                 }
                 else
                 {
+                    // Wyświetlenie komunikatu o błędzie, jeśli wprowadzona wartość nie jest prawidłowym numerem portu.
                     MessageBox.Show("Invalid input. Please enter a valid port number.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
+
         public bool IsUdpPortEditable => !_isSyncing;
+
+        // Komendy używane w interfejsie użytkownika
         public ICommand StartCommand { get; }
         public ICommand StopCommand { get; }
         public ICommand ChooseFolderCommand { get; }
         public ICommand ShowStatisticsCommand { get; }
+
+        // Zdarzenie informujące o zmianie właściwości
         public event PropertyChangedEventHandler PropertyChanged;
 
-        // Konstruktor inicjalizujący serwisy i komendy.
+        // Konstruktor modelu widoku
         public MainViewModel()
         {
+            // Inicjalizacja serwisów i komend
             _udpService = new UdpCommunicationService();
             _fileSyncService = new FileSyncService(_udpService, _statistics);
             StartCommand = new RelayCommand(StartSync, CanStartSync);
@@ -59,6 +95,11 @@ namespace MasterApp.ViewModels
             ChooseFolderCommand = new RelayCommand(ChooseFolder, CanChooseFolder);
             ShowStatisticsCommand = new RelayCommand(ShowStatistics, CanShowStatistics);
             LoadConfig();
+
+            _udpService.ConnectionStatusChanged += (sender, isConnected) =>
+            {
+                IsSlaveActive = isConnected;
+            };
         }
 
         // Destruktor zapewniający zatrzymanie synchronizacji przed zakończeniem działania aplikacji.
